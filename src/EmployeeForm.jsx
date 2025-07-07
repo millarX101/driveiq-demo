@@ -13,16 +13,18 @@ export default function EmployeeForm() {
     fuelType: "Petrol",
     kmPerYear: 15000,
     fuelEfficiency: 7.5,
-    businessUse: 0            // 0 % until user says “Yes”
+    businessUse: 0
   });
 
-  /* grab ?company= from the URL */
+  /* grab ?company= and save for later */
   useEffect(() => {
     const cid = new URLSearchParams(window.location.search).get("company");
-    if (cid) setCompanyId(cid);
+    if (cid) {
+      setCompanyId(cid);
+      localStorage.setItem("driveiq_company", cid);   // 👈 save for login/dashboard
+    }
   }, []);
 
-  /* generic change handler */
   const handleChange = (e) => {
     const { name, value } = e.target;
     setForm(prev => ({ ...prev, [name]: value }));
@@ -49,18 +51,22 @@ export default function EmployeeForm() {
     }
   };
 
-  /* ------------ UI ------------ */
+  /* UI */
   return (
     <div className="min-h-screen bg-purple-50 text-gray-900 flex flex-col">
       <header className="bg-white shadow-md py-4 px-6 flex items-center gap-3">
         <img
           src="https://static.wixstatic.com/media/9c690e_928771acf5c542a9923974c484f0f57e~mv2.png"
-          alt="millarX"
+          alt="millarX DriveIQ"
           className="h-10"
         />
         <div>
-          <h1 className="text-xl font-bold text-purple-800">millarX Emissions Entry</h1>
-          <p className="text-sm text-gray-500">Helping employers track Scope 3 data fast</p>
+          <h1 className="text-xl font-bold text-purple-800">
+            millarX&nbsp;DriveIQ – Vehicle Entry
+          </h1>
+          <p className="text-sm text-gray-500">
+            Helping employers track Scope&nbsp;3 and Grey-Fleet Scope&nbsp;2
+          </p>
         </div>
       </header>
 
@@ -74,7 +80,7 @@ export default function EmployeeForm() {
         <form onSubmit={handleSubmit}
               className="space-y-5 bg-white p-6 rounded-xl shadow-md">
 
-          {/* basic fields */}
+          {/* basic inputs */}
           {[
             { label:"Employee ID or Initials", name:"employeeId", type:"text" },
             { label:"Vehicle Type (e.g. Corolla Hybrid)", name:"vehicleType", type:"text" },
@@ -90,14 +96,13 @@ export default function EmployeeForm() {
                 {...f}
                 value={form[f.name]}
                 onChange={handleChange}
-                className="w-full p-3 rounded border border-gray-300
-                           focus:outline-none focus:ring-2 focus:ring-purple-600"
+                className="w-full p-3 rounded border border-gray-300 focus:ring-2 focus:ring-purple-600"
                 required
               />
             </div>
           ))}
 
-          {/* Fuel type */}
+          {/* fuel type */}
           <div>
             <label className="block mb-1 font-medium">Fuel Type</label>
             <select
@@ -113,7 +118,7 @@ export default function EmployeeForm() {
             </select>
           </div>
 
-          {/* Business-use question */}
+          {/* business-use radio */}
           <div>
             <label className="block mb-1 font-medium">
               Did you claim business use for this car on your tax return?
@@ -160,8 +165,8 @@ export default function EmployeeForm() {
           <button
             type="submit"
             disabled={!companyId}
-            className="w-full py-3 bg-purple-700 text-white font-semibold
-                       rounded hover:bg-purple-800 transition disabled:opacity-50">
+            className="w-full py-3 bg-purple-700 text-white font-semibold rounded hover:bg-purple-800 transition disabled:opacity-50"
+          >
             Submit
           </button>
         </form>

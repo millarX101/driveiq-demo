@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "./supabaseClient";
 
+const savedCompany = localStorage.getItem("driveiq_company") || "bens"; // fallback
 export default function Login() {
   const [email, setEmail] = useState("");
   const [sent, setSent]   = useState(false);
@@ -11,8 +12,9 @@ export default function Login() {
   const navigate   = useNavigate();
 
   /* where to go after login */
-  const redirectTo =
-    new URLSearchParams(search).get("redirect") || "/dashboard";
+const redirectTo =
+  new URLSearchParams(search).get("redirect") ||
+  `/dashboard?company=${savedCompany}`;
 
   /* if already signed-in, jump straight to dashboard */
   useEffect(() => {
