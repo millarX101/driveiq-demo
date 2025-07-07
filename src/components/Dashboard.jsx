@@ -7,6 +7,7 @@ PieChart, Pie, Cell, Tooltip as RTooltip, ResponsiveContainer
 } from "recharts";
 import { supabase } from "../supabaseClient";
 import BuyCreditsBanner from "./BuyCreditsBanner";
+import GreenfleetCard from "./components/GreenfleetCard";   // add this line
 
 /* ---- constants ---- */
 const EF            = { Petrol:2.32, Diesel:2.66, Hybrid:2.1, EV:0.79 }; // kg CO₂-e
@@ -67,7 +68,7 @@ export default function Dashboard() {
   const grey         = fleet.filter(f=>f.businessUse > 0).length;
   const scope2t      = fleet.reduce((s,v)=>s+v.scope2,0)/1000;
   const scope3t      = fleet.reduce((s,v)=>s+v.scope3,0)/1000;
-  const liability    = (scope2t + scope3t) * ACCU_PRICE;
+  const liability    = (scope2t) * ACCU_PRICE;
   const evCreditSave = fleet.reduce((s,v)=>s+v.credit,0);
   const payrollTot   = fleet.reduce((s,v)=>s+v.payrollSave,0);
   const sgTot        = fleet.reduce((s,v)=>s+v.sgSave,0);
@@ -104,12 +105,13 @@ export default function Dashboard() {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <Card title="Personal Cars"      value={personal} />
         <Card title="Grey Fleet"         value={grey} />
-        <Card title="Carbon Liability"   value={`A$${liability.toFixed(0)}`} />
+        <Card title="Grey-Fleet Liability"   value={`A$${liability.toFixed(0)}`} />
         <Card title="EV $-Saving/yr"     value={`A$${evCreditSave.toFixed(0)}`} />
       </div>
 
       {/* Carbon-credit banner */}
-      <BuyCreditsBanner companyId={companyId} liabilityTonnes={scope2t+scope3t} />
+      <BuyCreditsBanner companyId={companyId} liabilityTonnes={scope2t} />
+      <GreenfleetCard />
 
       {/* Company benefits */}
       <HoverBox title="Company Benefits">
