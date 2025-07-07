@@ -7,7 +7,7 @@ PieChart, Pie, Cell, Tooltip as RTooltip, ResponsiveContainer
 } from "recharts";
 import { supabase } from "../supabaseClient";
 import BuyCreditsBanner from "./BuyCreditsBanner";
-import GreenfleetCard from "./components/GreenfleetCard";   // add this line
+import GreenfleetCard from "./GreenfleetCard";   // add this line
 
 /* ---- constants ---- */
 const EF            = { Petrol:2.32, Diesel:2.66, Hybrid:2.1, EV:0.79 }; // kg CO₂-e
