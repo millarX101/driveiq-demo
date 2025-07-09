@@ -1,36 +1,43 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "./supabaseClient";
 import { useNavigate } from "react-router-dom";
+import { formatCurrency, formatNumber } from "./components/formatters";
 
 export default function EmployeeForm() {
   const navigate = useNavigate();
   const [companyId, setCompanyId] = useState("");
 
-  /* ------------- form state ------------- */
+  // ------------- Form State -------------
   const [form, setForm] = useState({
     employeeId: "",
     vehicleType: "",
     fuelType: "Petrol",
     kmPerYear: 15000,
     fuelEfficiency: 7.5,
-    businessUse: 0
+    businessUse: 0,
+    hasNovated: false
   });
 
-  /* grab ?company= and save for later */
+  // ------------- Grab company ID from URL or fallback to demo -------------
   useEffect(() => {
-    const cid = new URLSearchParams(window.location.search).get("company");
+    const params = new URLSearchParams(window.location.search);
+    const cid = params.get("company");
+    const isDemo = params.get("demo") === "true";
+
     if (cid) {
       setCompanyId(cid);
-      localStorage.setItem("driveiq_company", cid);   // 👈 save for login/dashboard
+      localStorage.setItem("driveiq_company", cid);
+    } else if (isDemo) {
+      setCompanyId("bens");
+      localStorage.setItem("driveiq_company", "bens");
     }
   }, []);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setForm(prev => ({ ...prev, [name]: value }));
+    setForm((prev) => ({ ...prev, [name]: value }));
   };
 
-  /* submission */
   const handleSubmit = async (e) => {
     e.preventDefault();
     const record = {
@@ -38,7 +45,8 @@ export default function EmployeeForm() {
       companyId,
       kmPerYear: +form.kmPerYear,
       fuelEfficiency: +form.fuelEfficiency,
-      businessUse: +form.businessUse
+      businessUse: +form.businessUse,
+      hasNovated: form.hasNovated
     };
 
     try {
@@ -51,7 +59,6 @@ export default function EmployeeForm() {
     }
   };
 
-  /* UI */
   return (
     <div className="min-h-screen bg-purple-50 text-gray-900 flex flex-col">
       <header className="bg-white shadow-md py-4 px-6 flex items-center gap-3">
@@ -73,23 +80,38 @@ export default function EmployeeForm() {
       <main className="flex-grow max-w-md mx-auto py-8 px-4">
         {!companyId && (
           <p className="text-red-600 mb-4">
-            Missing company ID in link. Please contact your administrator.
+            Missing company ID in link. Use <code>?company=xyz</code> or try <code>?demo=true</code>.
           </p>
         )}
 
-        <form onSubmit={handleSubmit}
-              className="space-y-5 bg-white p-6 rounded-xl shadow-md">
-
+        <form
+          onSubmit={handleSubmit}
+          className="space-y-5 bg-white p-6 rounded-xl shadow-md"
+        >
           {/* basic inputs */}
           {[
-            { label:"Employee ID or Initials", name:"employeeId", type:"text" },
-            { label:"Vehicle Type (e.g. Corolla Hybrid)", name:"vehicleType", type:"text" },
-            { label:"Estimated KM per Year", name:"kmPerYear", type:"number" },
             {
-              label:`Fuel Efficiency (${form.fuelType==="EV"?"kWh/100km":"L/100km"})`,
-              name:"fuelEfficiency", type:"number", step:"0.1"
+              label: "Employee ID or Initials",
+              name: "employeeId",
+              type: "text"
+            },
+            {
+              label: "Vehicle Type (e.g. Corolla Hybrid)",
+              name: "vehicleType",
+              type: "text"
+            },
+            {
+              label: "Estimated KM per Year",
+              name: "kmPerYear",
+              type: "number"
+            },
+            {
+              label: `Fuel Efficiency (${form.fuelType === "EV" ? "kWh/100km" : "L/100km"})`,
+              name: "fuelEfficiency",
+              type: "number",
+              step: "0.1"
             }
-          ].map(f=>(
+          ].map((f) => (
             <div key={f.name}>
               <label className="block mb-1 font-medium">{f.label}</label>
               <input
@@ -123,7 +145,6 @@ export default function EmployeeForm() {
             <label className="block mb-1 font-medium">
               Did you claim business use for this car on your tax return?
             </label>
-
             <div className="flex gap-6 mb-3">
               <label className="flex items-center gap-1">
                 <input
@@ -131,7 +152,9 @@ export default function EmployeeForm() {
                   name="hasBusiness"
                   value="no"
                   checked={form.businessUse === 0}
-                  onChange={() => setForm(prev => ({ ...prev, businessUse: 0 }))}
+                  onChange={() =>
+                    setForm((prev) => ({ ...prev, businessUse: 0 }))
+                  }
                 />
                 No
               </label>
@@ -141,7 +164,9 @@ export default function EmployeeForm() {
                   name="hasBusiness"
                   value="yes"
                   checked={form.businessUse !== 0}
-                  onChange={() => setForm(prev => ({ ...prev, businessUse: 50 }))}
+                  onChange={() =>
+                    setForm((prev) => ({ ...prev, businessUse: 50 }))
+                  }
                 />
                 Yes
               </label>
@@ -160,6 +185,39 @@ export default function EmployeeForm() {
                 required
               />
             )}
+          </div>
+
+          {/* novated lease radio */}
+          <div>
+            <label className="block mb-1 font-medium">
+              Is this car on a novated lease?
+            </label>
+            <div className="flex gap-6 mb-3">
+              <label className="flex items-center gap-1">
+                <input
+                  type="radio"
+                  name="hasNovated"
+                  value="no"
+                  checked={!form.hasNovated}
+                  onChange={() =>
+                    setForm((prev) => ({ ...prev, hasNovated: false }))
+                  }
+                />
+                No
+              </label>
+              <label className="flex items-center gap-1">
+                <input
+                  type="radio"
+                  name="hasNovated"
+                  value="yes"
+                  checked={form.hasNovated}
+                  onChange={() =>
+                    setForm((prev) => ({ ...prev, hasNovated: true }))
+                  }
+                />
+                Yes
+              </label>
+            </div>
           </div>
 
           <button

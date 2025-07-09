@@ -1,34 +1,41 @@
+// src/Confirmation.jsx
 import React from "react";
-import { Link, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 
 export default function Confirmation() {
-  const location = useLocation();
-  const query = new URLSearchParams(location.search);
-  const companyId = query.get("company");
+  const navigate = useNavigate();
+  const params = new URLSearchParams(useLocation().search);
+  const companyId = params.get("company") || localStorage.getItem("driveiq_company");
 
   return (
-    <div className="min-h-screen bg-purple-50 text-gray-900 flex flex-col items-center justify-center px-6">
+    <div className="min-h-screen bg-purple-50 flex flex-col items-center justify-center px-4 text-center">
       <img
         src="https://static.wixstatic.com/media/9c690e_928771acf5c542a9923974c484f0f57e~mv2.png"
-        alt="millarX"
-        className="h-14 mb-4"
+        alt="millarX DriveIQ"
+        className="h-16 mb-6"
       />
-      <h1 className="text-2xl font-bold text-purple-800 mb-2">
-        Thanks for your submission!
-      </h1>
-      <p className="text-center text-gray-600 max-w-md mb-6">
-        Your entry helps your company measure and reduce Scope 3 vehicle emissions.
-        Thanks for being part of the journey toward a cleaner transport future.
-      </p>
+      <h1 className="text-2xl font-bold text-purple-800 mb-2">Thanks for your submission!</h1>
+      <p className="text-gray-600 mb-6">Your vehicle data has been securely recorded.</p>
 
-      {companyId && (
-        <Link
-          to={`/?company=${companyId}`}
-          className="inline-block bg-purple-700 text-white px-6 py-3 rounded hover:bg-purple-800 transition"
+      <div className="flex gap-4">
+        <button
+          onClick={() => navigate(`/form?company=${companyId}`)}
+          className="bg-purple-700 text-white px-6 py-3 rounded hover:bg-purple-800"
         >
-          Have more than one car in the family? Please enter another submission
-        </Link>
-      )}
+          Enter Another Car
+        </button>
+
+        <button
+          onClick={() => navigate("/")}
+          className="bg-gray-700 text-white px-6 py-3 rounded hover:bg-gray-800"
+        >
+          Back to Home
+        </button>
+      </div>
+
+      <footer className="text-xs text-gray-500 mt-8">
+        © {new Date().getFullYear()} millarX • Scope 3 Reporting Pilot
+      </footer>
     </div>
   );
 }
