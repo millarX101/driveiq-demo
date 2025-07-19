@@ -13,7 +13,7 @@ export default function CalculatorEmbed() {
 
       <iframe
         title="Lease Calculator"
-        src="https://leasingengine.netlify.app/"
+        src="http://mxdealeradvantage.com.au/"
         className="flex-grow w-full"
         style={{ minHeight: "calc(100vh - 4rem)" }}   /* header height fallback */
       />

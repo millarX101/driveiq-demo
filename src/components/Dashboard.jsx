@@ -31,8 +31,6 @@ export default function Dashboard() {
   const [showCreditsPurchase, setShowCreditsPurchase] = useState(false);
   const [creditsPurchaseAmount, setCreditsPurchaseAmount] = useState('');
   const [carbonPurchases, setCarbonPurchases] = useState([]);
-  const [evTarget, setEvTarget] = useState(50); // Default 50% target
-  const [showTargetModal, setShowTargetModal] = useState(false);
 
   // CSV Download Functions
   const downloadCSV = (data, filename) => {
@@ -145,85 +143,7 @@ export default function Dashboard() {
   // EV adoption metrics
   const evCount = fleet.filter(f => ["EV", "Hybrid"].includes(f.fuelType)).length;
   const percentEV = fleet.length ? (evCount / fleet.length * 100) : 0;
-  const gapCars = Math.max(Math.ceil(evTarget / 100 * fleet.length - evCount), 0);
-  const gapPercentage = Math.max(evTarget - percentEV, 0);
-
-  // Get actionable recommendations based on current adoption level
-  const getEvRecommendations = () => {
-    const recommendations = [];
-    
-    if (percentEV < 10) {
-      recommendations.push({
-        priority: "high",
-        action: "Book an EV Education Webinar",
-        description: "Schedule a millarX webinar to educate staff about EV benefits and novated leasing",
-        contact: "Contact Ben at millarX",
-        icon: "🎓",
-        estimatedImpact: "5-15% adoption increase"
-      });
-      recommendations.push({
-        priority: "high", 
-        action: "Organize EV Test Drive Day",
-        description: "Arrange for employees to test drive various EV models on-site",
-        contact: "Contact Ben to organize",
-        icon: "🚗",
-        estimatedImpact: "10-20% adoption increase"
-      });
-    }
-    
-    if (percentEV < 25) {
-      recommendations.push({
-        priority: "medium",
-        action: "Enhanced Salary Packaging Education",
-        description: "Run targeted sessions on tax benefits and salary packaging for EVs",
-        contact: "Book through millarX",
-        icon: "💰",
-        estimatedImpact: "5-10% adoption increase"
-      });
-      recommendations.push({
-        priority: "medium",
-        action: "Install Workplace EV Charging",
-        description: "Add EV charging stations to encourage adoption",
-        contact: "Contact Ben for charging solutions",
-        icon: "⚡",
-        estimatedImpact: "8-15% adoption increase"
-      });
-    }
-    
-    if (percentEV < evTarget) {
-      recommendations.push({
-        priority: "low",
-        action: "EV Champion Program",
-        description: "Identify EV advocates to share experiences with colleagues",
-        contact: "millarX can help setup program",
-        icon: "🏆",
-        estimatedImpact: "3-8% adoption increase"
-      });
-      recommendations.push({
-        priority: "low",
-        action: "Fleet Policy Review",
-        description: "Update company car policy to prioritize or mandate EVs",
-        contact: "Policy templates available from millarX",
-        icon: "📋",
-        estimatedImpact: "10-25% adoption increase"
-      });
-    }
-
-    if (percentEV >= evTarget) {
-      recommendations.push({
-        priority: "success",
-        action: "Maintain Momentum",
-        description: "Continue current initiatives and consider increasing targets",
-        contact: "Discuss expansion with millarX",
-        icon: "🎉",
-        estimatedImpact: "Target achieved!"
-      });
-    }
-    
-    return recommendations;
-  };
-
-  const evRecommendations = getEvRecommendations();
+  const gapCars = Math.max(Math.ceil(50 / 100 * fleet.length - evCount), 0);
 
   // Fleet summary by fuel type
   const fleetSummary = ["EV", "Hybrid", "Petrol", "Diesel"]
@@ -467,13 +387,6 @@ export default function Dashboard() {
             </div>
             <div className="flex items-center space-x-4">
               <button
-                onClick={() => setShowTargetModal(true)}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-              >
-                <span>🎯</span>
-                <span>Set EV Target</span>
-              </button>
-              <button
                 onClick={() => setShowCreditsPurchase(true)}
                 className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors flex items-center space-x-2"
               >
@@ -500,76 +413,6 @@ export default function Dashboard() {
           </div>
         </div>
       </header>
-
-      {/* EV Target Setting Modal */}
-      {showTargetModal && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 max-w-md w-full mx-4">
-            <div className="flex items-center justify-between mb-6">
-              <h3 className="text-xl font-bold text-slate-800">Set EV Adoption Target</h3>
-              <button
-                onClick={() => setShowTargetModal(false)}
-                className="text-slate-400 hover:text-slate-600"
-              >
-                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                </svg>
-              </button>
-            </div>
-            
-            <div className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex items-center space-x-2 mb-2">
-                  <span className="text-blue-600">📊</span>
-                  <span className="font-medium text-blue-800">Current Status</span>
-                </div>
-                <div className="text-2xl font-bold text-blue-800">{percentEV.toFixed(1)}%</div>
-                <div className="text-sm text-blue-600">{evCount} of {fleet.length} vehicles are EV/Hybrid</div>
-              </div>
-              
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">
-                  Target EV Adoption Percentage
-                </label>
-                <input
-                  type="number"
-                  value={evTarget}
-                  onChange={(e) => setEvTarget(Math.min(100, Math.max(0, parseInt(e.target.value) || 0)))}
-                  className="w-full px-4 py-2 border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  min="0"
-                  max="100"
-                  step="5"
-                />
-                <p className="text-xs text-slate-500 mt-1">Recommended: 30-50% for most companies</p>
-              </div>
-              
-              <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                <div className="text-sm font-medium text-green-800 mb-2">Impact of Reaching {evTarget}% Target:</div>
-                <div className="space-y-1 text-sm text-green-700">
-                  <div>• {Math.ceil(evTarget / 100 * fleet.length)} total EV/Hybrid vehicles needed</div>
-                  <div>• {gapCars} additional vehicles to convert</div>
-                  <div>• Estimated annual savings: {formatCurrency(gapCars * 2000)} in tax benefits</div>
-                </div>
-              </div>
-              
-              <div className="flex space-x-3">
-                <button
-                  onClick={() => setShowTargetModal(false)}
-                  className="flex-1 px-4 py-2 border border-slate-300 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
-                >
-                  Cancel
-                </button>
-                <button
-                  onClick={() => setShowTargetModal(false)}
-                  className="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  Set Target
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Carbon Credits Purchase Modal */}
       {showCreditsPurchase && (
@@ -895,15 +738,7 @@ export default function Dashboard() {
 
             {/* EV Adoption Progress */}
             <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-8">
-              <div className="flex items-center justify-between mb-6">
-                <h3 className="text-xl font-bold text-slate-800">EV Adoption Progress</h3>
-                <button
-                  onClick={() => setShowTargetModal(true)}
-                  className="px-3 py-1 text-sm bg-blue-100 text-blue-800 rounded-lg hover:bg-blue-200 transition-colors"
-                >
-                  Adjust Target ({evTarget}%)
-                </button>
-              </div>
+              <h3 className="text-xl font-bold text-slate-800 mb-6">EV Adoption Progress</h3>
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 <div className="flex justify-center">
                   <div className="relative">
@@ -937,148 +772,44 @@ export default function Dashboard() {
                 <div className="space-y-6">
                   <div>
                     <div className="flex justify-between text-sm text-slate-600 mb-2">
-                      <span>Progress to {evTarget}% Target</span>
-                      <span>{percentEV.toFixed(1)}% / {evTarget}%</span>
+                      <span>Progress to 50% Target</span>
+                      <span>{percentEV.toFixed(1)}% / 50%</span>
                     </div>
                     <div className="w-full bg-gray-200 rounded-full h-3">
                       <div 
                         className="bg-gradient-to-r from-green-500 to-emerald-500 h-3 rounded-full transition-all duration-500"
-                        style={{ width: `${Math.min((percentEV / evTarget) * 100, 100)}%` }}
+                        style={{ width: `${Math.min(percentEV * 2, 100)}%` }}
                       ></div>
                     </div>
-                    <p className="text-xs text-slate-500 mt-1">
-                      {percentEV >= evTarget 
-                        ? "🎉 Target achieved!" 
-                        : `${gapPercentage.toFixed(1)}% gap to target`}
-                    </p>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-green-50 rounded-xl p-4">
                       <div className="text-lg font-bold text-green-700">{evCount}</div>
-                      <div className="text-sm text-green-600">Current EV/Hybrid</div>
+                      <div className="text-sm text-green-600">EV/Hybrid Vehicles</div>
                     </div>
                     <div className="bg-slate-50 rounded-xl p-4">
                       <div className="text-lg font-bold text-slate-700">{gapCars}</div>
-                      <div className="text-sm text-slate-600">Needed for Target</div>
+                      <div className="text-sm text-slate-600">Vehicles to Target</div>
                     </div>
                   </div>
 
                   <div className="bg-purple-50 rounded-xl p-4">
-                    <div className="text-sm font-medium text-purple-800 mb-2">Target Achievement Benefits</div>
+                    <div className="text-sm font-medium text-purple-800 mb-2">Annual Savings Potential</div>
                     <div className="space-y-1">
                       <div className="flex justify-between text-sm">
-                        <span>Additional Tax Savings:</span>
-                        <span className="font-medium">{formatCurrency(gapCars * 2000)}</span>
+                        <span>Employee Tax Savings:</span>
+                        <span className="font-medium">{formatCurrency(evTaxSave)}</span>
                       </div>
                       <div className="flex justify-between text-sm">
-                        <span>CO₂ Reduction:</span>
-                        <span className="font-medium">{(gapCars * 2.5).toFixed(1)} tonnes/year</span>
+                        <span>Carbon Credit Savings:</span>
+                        <span className="font-medium">{formatCurrency(evCreditSave)}</span>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
-
-            {/* Action Plan to Achieve Target */}
-            {percentEV < evTarget && (
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-8">
-                <div className="flex items-center justify-between mb-6">
-                  <h3 className="text-xl font-bold text-slate-800">Action Plan to Reach {evTarget}% Target</h3>
-                  <div className="text-sm text-slate-600">
-                    {gapCars} more EV adoptions needed
-                  </div>
-                </div>
-                
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {evRecommendations.map((rec, index) => (
-                    <div key={index} className={`rounded-xl p-6 border-2 ${
-                      rec.priority === 'high' ? 'bg-red-50 border-red-200' :
-                      rec.priority === 'medium' ? 'bg-yellow-50 border-yellow-200' :
-                      rec.priority === 'success' ? 'bg-green-50 border-green-200' :
-                      'bg-blue-50 border-blue-200'
-                    }`}>
-                      <div className="flex items-start space-x-3">
-                        <div className="text-2xl">{rec.icon}</div>
-                        <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
-                            <h4 className="font-semibold text-slate-800">{rec.action}</h4>
-                            <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                              rec.priority === 'high' ? 'bg-red-100 text-red-800' :
-                              rec.priority === 'medium' ? 'bg-yellow-100 text-yellow-800' :
-                              rec.priority === 'success' ? 'bg-green-100 text-green-800' :
-                              'bg-blue-100 text-blue-800'
-                            }`}>
-                              {rec.priority === 'success' ? 'Complete' : `${rec.priority} priority`}
-                            </span>
-                          </div>
-                          <p className="text-sm text-slate-600 mb-3">{rec.description}</p>
-                          <div className="flex items-center justify-between">
-                            <p className="text-xs font-medium text-slate-700">{rec.contact}</p>
-                            <p className="text-xs text-green-600 font-medium">{rec.estimatedImpact}</p>
-                          </div>
-                          {rec.priority !== 'success' && (
-                            <button className="mt-3 w-full px-4 py-2 bg-slate-800 text-white rounded-lg hover:bg-slate-700 transition-colors text-sm">
-                              Get Started
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                
-                <div className="mt-6 p-4 bg-slate-50 rounded-lg">
-                  <div className="flex items-center space-x-2 mb-2">
-                    <span className="text-blue-600">📞</span>
-                    <span className="font-semibold text-slate-800">Need Help?</span>
-                  </div>
-                  <p className="text-sm text-slate-600">
-                    Contact Ben at millarX for personalized advice on achieving your EV adoption targets. 
-                    We can help with education programs, policy development, and implementation strategies.
-                  </p>
-                  <button className="mt-3 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors text-sm">
-                    Contact millarX
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Success Message */}
-            {percentEV >= evTarget && (
-              <div className="bg-white/80 backdrop-blur-sm rounded-2xl shadow-xl border border-white/50 p-8">
-                <div className="text-center">
-                  <div className="text-6xl mb-4">🎉</div>
-                  <h3 className="text-2xl font-bold text-green-800 mb-2">Congratulations!</h3>
-                  <p className="text-slate-600 mb-4">
-                    You've achieved your {evTarget}% EV adoption target with {percentEV.toFixed(1)}% adoption rate.
-                  </p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-                    <div className="bg-green-50 rounded-lg p-4">
-                      <div className="text-2xl font-bold text-green-800">{evCount}</div>
-                      <div className="text-sm text-green-600">EV/Hybrid Vehicles</div>
-                    </div>
-                    <div className="bg-blue-50 rounded-lg p-4">
-                      <div className="text-2xl font-bold text-blue-800">{formatCurrency(evTaxSave)}</div>
-                      <div className="text-sm text-blue-600">Annual Tax Savings</div>
-                    </div>
-                    <div className="bg-purple-50 rounded-lg p-4">
-                      <div className="text-2xl font-bold text-purple-800">{(evCount * 2.5).toFixed(1)}</div>
-                      <div className="text-sm text-purple-600">Tonnes CO₂ Saved/Year</div>
-                    </div>
-                  </div>
-                  <div className="mt-6">
-                    <button 
-                      onClick={() => setEvTarget(Math.min(100, evTarget + 10))}
-                      className="px-6 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-                    >
-                      Set Higher Target
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
 
             {/* Fleet Composition - Show for emissions view */}
             {selectedMetric === "emissions" && (
