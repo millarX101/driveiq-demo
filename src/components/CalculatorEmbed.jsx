@@ -13,7 +13,7 @@ export default function CalculatorEmbed() {
 
       <iframe
         title="Lease Calculator"
-        src="http://mxdealeradvantage.com.au/"
+        src="https://www.mxdealeradvantage.com.au/"
         className="flex-grow w-full"
         style={{ minHeight: "calc(100vh - 4rem)" }}   /* header height fallback */
       />

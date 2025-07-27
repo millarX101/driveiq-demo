@@ -26,10 +26,18 @@ const redirectTo =
   /* send magic-link */
   const signIn = async (e) => {
     e.preventDefault();
+    
+    // Use development URL for localhost, production URL for deployed version
+    const baseUrl = window.location.hostname === 'localhost' 
+      ? (import.meta.env.VITE_DEV_URL || `http://localhost:${window.location.port}`)
+      : window.location.origin;
+    
+    console.log('Magic link redirect URL:', `${baseUrl}/login?redirect=${encodeURIComponent(redirectTo)}`);
+    
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/login?redirect=${encodeURIComponent(
+        emailRedirectTo: `${baseUrl}/login?redirect=${encodeURIComponent(
           redirectTo
         )}`,
       },
