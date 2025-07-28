@@ -6,3 +6,5 @@
   from = "/*"
   to   = "/index.html"
   status = 200
+
+# Updated: 2025-01-28 - Force rebuild after fixing Dashboard syntax errors and calculator link
