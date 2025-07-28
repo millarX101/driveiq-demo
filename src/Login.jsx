@@ -1,49 +1,56 @@
 //  src/Login.jsx
 import { useState, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { supabase } from "./supabaseClient";
 
 const savedCompany = localStorage.getItem("driveiq_company") || "bens"; // fallback
+
+// Simple admin credentials (in production, this should be more secure)
+const ADMIN_CREDENTIALS = {
+  email: "admin@millarx.com",
+  password: "admin123"
+};
+
 export default function Login() {
   const [email, setEmail] = useState("");
-  const [sent, setSent]   = useState(false);
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const { search } = useLocation();
-  const navigate   = useNavigate();
+  const navigate = useNavigate();
 
   /* where to go after login */
-const redirectTo =
-  new URLSearchParams(search).get("redirect") ||
-  `/dashboard?company=${savedCompany}`;
+  const redirectTo =
+    new URLSearchParams(search).get("redirect") ||
+    `/dashboard?company=${savedCompany}`;
 
-  /* if already signed-in, jump straight to dashboard */
+  /* check if already logged in */
   useEffect(() => {
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate(redirectTo, { replace: true });
-    });
-  }, []);
+    const isLoggedIn = localStorage.getItem("driveiq_admin_logged_in");
+    if (isLoggedIn === "true") {
+      navigate(redirectTo, { replace: true });
+    }
+  }, [navigate, redirectTo]);
 
-  /* send magic-link */
-  const signIn = async (e) => {
+  /* handle admin login */
+  const handleLogin = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    // Simple credential check
+    if (email === ADMIN_CREDENTIALS.email && password === ADMIN_CREDENTIALS.password) {
+      // Set login state
+      localStorage.setItem("driveiq_admin_logged_in", "true");
+      localStorage.setItem("driveiq_admin_email", email);
+      
+      // Redirect to dashboard
+      navigate(redirectTo, { replace: true });
+    } else {
+      setError("Invalid email or password");
+    }
     
-    // Use development URL for localhost, production URL for deployed version
-    const baseUrl = window.location.hostname === 'localhost' 
-      ? (import.meta.env.VITE_DEV_URL || `http://localhost:${window.location.port}`)
-      : window.location.origin;
-    
-    console.log('Magic link redirect URL:', `${baseUrl}/login?redirect=${encodeURIComponent(redirectTo)}`);
-    
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: {
-        emailRedirectTo: `${baseUrl}/login?redirect=${encodeURIComponent(
-          redirectTo
-        )}`,
-      },
-    });
-    if (error) return alert(error.message);
-    setSent(true);
+    setIsLoading(false);
   };
 
   return (
@@ -59,28 +66,47 @@ const redirectTo =
           DriveIQ Dashboard Login
         </h1>
 
-        {sent ? (
-          <p className="text-center text-sm">
-            We’ve emailed you a secure login link.<br />Check your inbox.
-          </p>
-        ) : (
-          <form onSubmit={signIn} className="space-y-3">
+        <form onSubmit={handleLogin} className="space-y-3">
+          <div>
             <input
               type="email"
               required
-              placeholder="you@company.com"
+              placeholder="admin@millarx.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full p-3 border rounded"
+              className="w-full p-3 border rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
             />
-            <button
-              type="submit"
-              className="w-full py-2 bg-purple-700 text-white rounded hover:bg-purple-800"
-            >
-              Send Magic Link
-            </button>
-          </form>
-        )}
+          </div>
+          
+          <div>
+            <input
+              type="password"
+              required
+              placeholder="Password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full p-3 border rounded focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+            />
+          </div>
+
+          {error && (
+            <div className="text-red-600 text-sm text-center">
+              {error}
+            </div>
+          )}
+
+          <button
+            type="submit"
+            disabled={isLoading}
+            className="w-full py-2 bg-purple-700 text-white rounded hover:bg-purple-800 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isLoading ? "Logging in..." : "Login"}
+          </button>
+        </form>
+
+        <div className="text-xs text-gray-500 text-center">
+          Demo credentials: admin@millarx.com / admin123
+        </div>
       </div>
     </div>
   );

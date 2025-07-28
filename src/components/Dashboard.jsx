@@ -178,10 +178,12 @@ const NovatedLeasingPlatform = () => {
   };
 
   const handleLogout = async () => {
-    await supabaseClient.auth.signOut();
-    setUser(null);
-    setCurrentPortal('mxdriveiq');
-    setActiveTab('dashboard');
+    // Clear admin login state
+    localStorage.removeItem("driveiq_admin_logged_in");
+    localStorage.removeItem("driveiq_admin_email");
+    
+    // Redirect to login page
+    window.location.href = '/login';
   };
 
   // Quick wins calculation
