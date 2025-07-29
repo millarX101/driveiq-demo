@@ -17,20 +17,29 @@ export default function Confirmation() {
       <h1 className="text-2xl font-bold text-purple-800 mb-2">Thanks for your submission!</h1>
       <p className="text-gray-600 mb-6">Your vehicle data has been securely recorded.</p>
 
-      <div className="flex gap-4">
+      <div className="flex flex-col gap-4">
         <button
-          onClick={() => navigate(`/form?company=${companyId}`)}
-          className="bg-purple-700 text-white px-6 py-3 rounded hover:bg-purple-800"
+          onClick={() => navigate("/employee-login")}
+          className="bg-purple-700 text-white px-6 py-3 rounded hover:bg-purple-800 font-semibold"
         >
-          Enter Another Car
+          Access My Dashboard
         </button>
 
-        <button
-          onClick={() => navigate("/")}
-          className="bg-gray-700 text-white px-6 py-3 rounded hover:bg-gray-800"
-        >
-          Back to Home
-        </button>
+        <div className="flex gap-4">
+          <button
+            onClick={() => navigate(`/form?company=${companyId}`)}
+            className="bg-gray-600 text-white px-6 py-3 rounded hover:bg-gray-700"
+          >
+            Enter Another Car
+          </button>
+
+          <button
+            onClick={() => navigate("/")}
+            className="bg-gray-600 text-white px-6 py-3 rounded hover:bg-gray-700"
+          >
+            Back to Home
+          </button>
+        </div>
       </div>
 
       <footer className="text-xs text-gray-500 mt-8">
