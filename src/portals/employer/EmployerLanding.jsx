@@ -65,9 +65,9 @@ const EmployerLanding = () => {
             <div className="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mb-4">
               <BarChart3 className="w-6 h-6 text-purple-600" />
             </div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Fleet Analytics</h3>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">Employee Commuting and Scope 2 Analytics</h3>
             <p className="text-gray-600">
-              Comprehensive analytics on fleet costs, utilization, and performance metrics.
+              Comprehensive analytics on employee commuting patterns, fleet costs, and Scope 2 emissions tracking.
             </p>
           </div>
         </div>
