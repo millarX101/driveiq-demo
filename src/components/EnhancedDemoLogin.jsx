@@ -244,33 +244,27 @@ const EnhancedDemoLogin = ({ portalType = 'employee' }) => {
           </p>
         </div>
 
-        {/* Demo Credentials Info */}
+        {/* Demo Access Info */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-blue-900">Demo Credentials</h3>
+            <h3 className="text-sm font-medium text-blue-900">Demo Access</h3>
             <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
-              {demoCredentials.length} available
+              {demoCredentials.length} accounts
             </span>
           </div>
-          <div className="space-y-2 max-h-32 overflow-y-auto">
-            {demoCredentials.map((cred, index) => (
-              <div key={index} className="text-xs text-blue-800">
-                <button
-                  type="button"
-                  onClick={() => fillDemoCredentials(index)}
-                  className="hover:underline text-left w-full flex justify-between"
-                >
-                  <span>
-                    <strong>{cred.name}:</strong> {cred.email} / {cred.password}
-                  </span>
-                  {cred.role && (
-                    <span className="text-blue-600 italic">{cred.role}</span>
-                  )}
-                </button>
-              </div>
-            ))}
+          <p className="text-sm text-blue-800 mb-3">
+            This is a demonstration environment with sample data from TechFlow Solutions.
+          </p>
+          <div className="space-y-2">
+            <button
+              type="button"
+              onClick={() => fillDemoCredentials(0)}
+              className="w-full text-left p-2 bg-white border border-blue-200 rounded hover:bg-blue-50 transition-colors"
+            >
+              <div className="text-sm font-medium text-blue-900">Try Demo Account</div>
+              <div className="text-xs text-blue-600">Click to auto-fill login credentials</div>
+            </button>
           </div>
-          <p className="text-xs text-blue-600 mt-2">Click any credential above to auto-fill</p>
         </div>
 
         {/* Login Form */}
