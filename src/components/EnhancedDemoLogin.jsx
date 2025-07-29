@@ -211,60 +211,14 @@ const EnhancedDemoLogin = ({ portalType = 'employee' }) => {
           <p className="text-sm text-gray-500">{config.subtitle}</p>
         </div>
 
-        {/* Data Source Status */}
-        <div className={`border rounded-lg p-3 ${supabaseConnected ? 'bg-green-50 border-green-200' : 'bg-yellow-50 border-yellow-200'}`}>
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              {supabaseConnected ? (
-                <>
-                  <Database className="h-4 w-4 text-green-600" />
-                  <Wifi className="h-4 w-4 text-green-600" />
-                  <span className="text-sm font-medium text-green-800">Live Supabase Data</span>
-                </>
-              ) : (
-                <>
-                  <Database className="h-4 w-4 text-yellow-600" />
-                  <WifiOff className="h-4 w-4 text-yellow-600" />
-                  <span className="text-sm font-medium text-yellow-800">Mock Data Mode</span>
-                </>
-              )}
-            </div>
-            <button
-              onClick={checkSupabaseConnection}
-              className="text-xs px-2 py-1 rounded bg-white border hover:bg-gray-50"
-            >
-              Retry
-            </button>
-          </div>
-          <p className="text-xs mt-1 text-gray-600">
-            {supabaseConnected 
-              ? 'Connected to real sample company database with 150 employees' 
-              : 'Using fallback demo data - check network connection'
-            }
-          </p>
-        </div>
-
-        {/* Demo Access Info */}
+        {/* Demo Environment Info */}
         <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
           <div className="flex items-center justify-between mb-2">
-            <h3 className="text-sm font-medium text-blue-900">Demo Access</h3>
-            <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
-              {demoCredentials.length} accounts
-            </span>
+            <h3 className="text-sm font-medium text-blue-900">Demo Environment</h3>
           </div>
-          <p className="text-sm text-blue-800 mb-3">
+          <p className="text-sm text-blue-800">
             This is a demonstration environment with sample data from TechFlow Solutions.
           </p>
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={() => fillDemoCredentials(0)}
-              className="w-full text-left p-2 bg-white border border-blue-200 rounded hover:bg-blue-50 transition-colors"
-            >
-              <div className="text-sm font-medium text-blue-900">Try Demo Account</div>
-              <div className="text-xs text-blue-600">Click to auto-fill login credentials</div>
-            </button>
-          </div>
         </div>
 
         {/* Login Form */}
@@ -341,11 +295,6 @@ const EnhancedDemoLogin = ({ portalType = 'employee' }) => {
             </button>
           </div>
 
-          <div className="text-center">
-            <p className="text-xs text-gray-500">
-              {supabaseConnected ? 'Live demo with real sample data' : 'Demo environment with mock data'}
-            </p>
-          </div>
         </form>
 
         {/* Portal Navigation */}
