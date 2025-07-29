@@ -328,6 +328,22 @@ const EmployeeDashboard = () => {
     description: ''
   });
 
+  // Add Vehicle Modal State
+  const [showAddVehicleModal, setShowAddVehicleModal] = useState(false);
+  const [newVehicle, setNewVehicle] = useState({
+    make: '',
+    model: '',
+    year: '',
+    fuelType: 'petrol',
+    monthlyPayment: '',
+    leaseEndDate: '',
+    isNovated: false
+  });
+
+  // Vehicle Details Modal State
+  const [showVehicleDetailsModal, setShowVehicleDetailsModal] = useState(false);
+  const [selectedVehicle, setSelectedVehicle] = useState(null);
+
   // Australian-specific emission factors (kg CO2 per km)
   const emissionFactors = {
     car: 0.21,        // Average Australian car
@@ -526,6 +542,76 @@ const EmployeeDashboard = () => {
     }
   };
 
+  // Add Vehicle functionality
+  const saveVehicle = async () => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      const userId = session?.user?.id || 'demo-employee-123';
+
+      const { error } = await supabase
+        .from('employee_vehicles')
+        .insert({
+          user_id: userId,
+          make: newVehicle.make,
+          model: newVehicle.model,
+          year: parseInt(newVehicle.year),
+          fuel_type: newVehicle.fuelType,
+          monthly_lease_payment: parseFloat(newVehicle.monthlyPayment) || 0,
+          lease_end_date: newVehicle.leaseEndDate,
+          is_novated: newVehicle.isNovated,
+          created_at: new Date().toISOString()
+        });
+
+      if (error) {
+        console.error('Error saving vehicle:', error);
+        alert('Error saving vehicle to database');
+      } else {
+        // Add to local state
+        const newLease = {
+          id: personalData.currentLeases.length + 1,
+          vehicle: `${newVehicle.make} ${newVehicle.model}`,
+          monthlyPayment: parseFloat(newVehicle.monthlyPayment) || 0,
+          leaseEnd: newVehicle.leaseEndDate,
+          status: 'active',
+          co2Saved: newVehicle.fuelType === 'electric' ? 2.4 : newVehicle.fuelType === 'hybrid' ? 1.8 : 0,
+          image: '/api/placeholder/300/200'
+        };
+        
+        setPersonalData(prev => ({
+          ...prev,
+          currentLeases: [...prev.currentLeases, newLease]
+        }));
+
+        // Reset form and close modal
+        setNewVehicle({
+          make: '',
+          model: '',
+          year: '',
+          fuelType: 'petrol',
+          monthlyPayment: '',
+          leaseEndDate: '',
+          isNovated: false
+        });
+        setShowAddVehicleModal(false);
+        alert('Vehicle added successfully!');
+      }
+    } catch (error) {
+      console.error('Error saving vehicle:', error);
+      alert('Error saving vehicle');
+    }
+  };
+
+  // Vehicle Details functionality
+  const viewVehicleDetails = (vehicle) => {
+    setSelectedVehicle(vehicle);
+    setShowVehicleDetailsModal(true);
+  };
+
+  const manageVehicle = (vehicle) => {
+    // For now, just show details - could expand to edit functionality
+    viewVehicleDetails(vehicle);
+  };
+
   const removeSegment = (index) => {
     const segmentToRemove = dailyCommute.segments[index];
     setDailyCommute(prev => ({
@@ -716,7 +802,10 @@ const EmployeeDashboard = () => {
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
         <div className="flex items-center justify-between mb-6">
           <h3 className="text-lg font-semibold text-gray-900">My Vehicles</h3>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2">
+          <button 
+            onClick={() => setShowAddVehicleModal(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 flex items-center space-x-2"
+          >
             <Plus size={16} />
             <span>Add Vehicle</span>
           </button>
@@ -745,10 +834,16 @@ const EmployeeDashboard = () => {
                   <p>CO₂ saved: {lease.co2Saved}t this year</p>
                 </div>
                 <div className="mt-4 flex space-x-2">
-                  <button className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200">
+                  <button 
+                    onClick={() => viewVehicleDetails(lease)}
+                    className="flex-1 bg-gray-100 text-gray-700 py-2 px-3 rounded text-sm hover:bg-gray-200"
+                  >
                     View Details
                   </button>
-                  <button className="bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700">
+                  <button 
+                    onClick={() => manageVehicle(lease)}
+                    className="bg-blue-600 text-white py-2 px-3 rounded text-sm hover:bg-blue-700"
+                  >
                     Manage
                   </button>
                 </div>
@@ -1441,7 +1536,7 @@ const EmployeeDashboard = () => {
       {/* Navigation */}
       <nav className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-4">
-          <div className="flex space-x-1 py-4">
+          <div className="flex space-x-1 py-4 overflow-x-auto">
             <TabButton
               id="overview"
               label="Overview"
@@ -1451,21 +1546,21 @@ const EmployeeDashboard = () => {
             />
             <TabButton
               id="commute"
-              label="Commute Tracking"
+              label="Commute"
               icon={MapPin}
               active={activeTab === 'commute'}
               onClick={setActiveTab}
             />
             <TabButton
               id="vehicles"
-              label="My Vehicles"
+              label="Vehicles"
               icon={Car}
               active={activeTab === 'vehicles'}
               onClick={setActiveTab}
             />
             <TabButton
               id="tips"
-              label="Sustainability Tips"
+              label="Tips"
               icon={Lightbulb}
               active={activeTab === 'tips'}
               onClick={setActiveTab}
@@ -1485,6 +1580,235 @@ const EmployeeDashboard = () => {
       <main className="max-w-7xl mx-auto px-4 py-8">
         {renderTabContent()}
       </main>
+
+      {/* Add Vehicle Modal */}
+      {showAddVehicleModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-gray-900">Add New Vehicle</h3>
+                <button
+                  onClick={() => setShowAddVehicleModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Make</label>
+                  <input
+                    type="text"
+                    value={newVehicle.make}
+                    onChange={(e) => setNewVehicle(prev => ({ ...prev, make: e.target.value }))}
+                    placeholder="e.g., Tesla"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Model</label>
+                  <input
+                    type="text"
+                    value={newVehicle.model}
+                    onChange={(e) => setNewVehicle(prev => ({ ...prev, model: e.target.value }))}
+                    placeholder="e.g., Model 3"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Year</label>
+                  <input
+                    type="number"
+                    value={newVehicle.year}
+                    onChange={(e) => setNewVehicle(prev => ({ ...prev, year: e.target.value }))}
+                    placeholder="2024"
+                    min="2020"
+                    max="2025"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Fuel Type</label>
+                  <select
+                    value={newVehicle.fuelType}
+                    onChange={(e) => setNewVehicle(prev => ({ ...prev, fuelType: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  >
+                    <option value="petrol">Petrol</option>
+                    <option value="diesel">Diesel</option>
+                    <option value="hybrid">Hybrid</option>
+                    <option value="electric">Electric</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Monthly Payment ($)</label>
+                  <input
+                    type="number"
+                    value={newVehicle.monthlyPayment}
+                    onChange={(e) => setNewVehicle(prev => ({ ...prev, monthlyPayment: e.target.value }))}
+                    placeholder="890"
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Lease End Date</label>
+                  <input
+                    type="date"
+                    value={newVehicle.leaseEndDate}
+                    onChange={(e) => setNewVehicle(prev => ({ ...prev, leaseEndDate: e.target.value }))}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                  />
+                </div>
+              </div>
+              
+              <div className="flex items-center">
+                <input
+                  type="checkbox"
+                  id="isNovated"
+                  checked={newVehicle.isNovated}
+                  onChange={(e) => setNewVehicle(prev => ({ ...prev, isNovated: e.target.checked }))}
+                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                />
+                <label htmlFor="isNovated" className="ml-2 block text-sm text-gray-900">
+                  This is a novated lease
+                </label>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => setShowAddVehicleModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+                >
+                  Cancel
+                </button>
+                <button
+                  onClick={saveVehicle}
+                  className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium"
+                >
+                  Add Vehicle
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Vehicle Details Modal */}
+      {showVehicleDetailsModal && selectedVehicle && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center justify-between">
+                <h3 className="text-xl font-semibold text-gray-900">Vehicle Details</h3>
+                <button
+                  onClick={() => setShowVehicleDetailsModal(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+            </div>
+            
+            <div className="p-6 space-y-6">
+              <div className="text-center">
+                <div className="h-32 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center mb-4">
+                  <Car className="h-16 w-16 text-white" />
+                </div>
+                <h4 className="text-2xl font-bold text-gray-900">{selectedVehicle.vehicle}</h4>
+                <span className={`inline-block px-3 py-1 text-sm rounded-full font-medium mt-2 ${
+                  selectedVehicle.status === 'active' 
+                    ? 'bg-green-100 text-green-800' 
+                    : 'bg-orange-100 text-orange-800'
+                }`}>
+                  {selectedVehicle.status === 'active' ? 'Active Lease' : 'Ending Soon'}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-4">
+                  <div className="p-4 bg-blue-50 rounded-lg">
+                    <h5 className="font-semibold text-blue-900 mb-2">Lease Details</h5>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>Monthly Payment:</span>
+                        <span className="font-semibold">${selectedVehicle.monthlyPayment}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Lease End Date:</span>
+                        <span className="font-semibold">{new Date(selectedVehicle.leaseEnd).toLocaleDateString('en-AU')}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Remaining Months:</span>
+                        <span className="font-semibold">
+                          {Math.max(0, Math.ceil((new Date(selectedVehicle.leaseEnd) - new Date()) / (1000 * 60 * 60 * 24 * 30)))}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="p-4 bg-green-50 rounded-lg">
+                    <h5 className="font-semibold text-green-900 mb-2">Environmental Impact</h5>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span>CO₂ Saved This Year:</span>
+                        <span className="font-semibold text-green-600">{selectedVehicle.co2Saved}t</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Fuel Type:</span>
+                        <span className="font-semibold">Electric</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span>Efficiency Rating:</span>
+                        <span className="font-semibold">★★★★★</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="p-4 bg-gray-50 rounded-lg">
+                <h5 className="font-semibold text-gray-900 mb-3">Quick Actions</h5>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                  <button className="p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 text-center">
+                    <Calendar className="h-5 w-5 mx-auto mb-1 text-blue-600" />
+                    <span className="text-xs">Service History</span>
+                  </button>
+                  <button className="p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 text-center">
+                    <DollarSign className="h-5 w-5 mx-auto mb-1 text-green-600" />
+                    <span className="text-xs">Payment History</span>
+                  </button>
+                  <button className="p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 text-center">
+                    <Settings className="h-5 w-5 mx-auto mb-1 text-gray-600" />
+                    <span className="text-xs">Manage Lease</span>
+                  </button>
+                  <button className="p-3 bg-white rounded-lg border border-gray-200 hover:bg-gray-50 text-center">
+                    <Share2 className="h-5 w-5 mx-auto mb-1 text-purple-600" />
+                    <span className="text-xs">Share Details</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                <button
+                  onClick={() => setShowVehicleDetailsModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 font-medium"
+                >
+                  Close
+                </button>
+                <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 font-medium">
+                  Edit Vehicle
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 mt-12">
