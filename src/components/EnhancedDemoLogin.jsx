@@ -28,7 +28,7 @@ const EnhancedDemoLogin = ({ portalType = 'employee' }) => {
       { email: 'david.nguyen@techflowsolutions.com.au', password: 'demo123', name: 'David Nguyen', userId: 'techflow-emp-007' }
     ],
     employer: [
-      { email: 'hr@techflowsolutions.com.au', password: 'admin123', name: 'Jennifer Walsh', userId: 'techflow-hr-001' }
+      { email: 'admin@techflowsolutions.com.au', password: 'admin123', name: 'TechFlow Admin', userId: 'techflow-hr-001' }
     ],
     mxdealer: [
       { email: 'dealer@mxdriveiq.com.au', password: 'dealer123', name: 'MX Dealer', userId: 'mxdealer-001' }
