@@ -21,7 +21,8 @@ import EmployerDashboard from './portals/employer/EmployerDashboard';
 // MXDealer Portal
 import MXDealerLanding from './portals/mxdealer/MXDealerLanding';
 import MXDealerLogin from './portals/mxdealer/MXDealerLogin';
-import MXDealerDashboard from './portals/mxdealer/MXDealerDashboard';
+import MXDealerDashboardImproved from './portals/mxdealer/MXDealerDashboardImproved';
+import MXIntegratedPlatform from './components/MXIntegratedPlatform';
 
 // Admin Portal
 import AdminLogin from './portals/admin/AdminLogin';
@@ -33,7 +34,7 @@ import ProtectedRoute from './shared/components/ProtectedRoute';
 // Legacy Components (for backward compatibility)
 import Login from './Login';
 import Protected from './Protected';
-import Dashboard from './components/Dashboard';
+import Dashboard from './Components/Dashboard';
 
 // Existing employee components (moved to new structure)
 import EmployeeLoginLegacy from './components/EmployeeLogin';
@@ -105,11 +106,12 @@ function App() {
             path="/mxdealer/dashboard" 
             element={
               <ProtectedRoute portalType="mxdealer">
-                <MXDealerDashboard />
+                <MXDealerDashboardImproved />
               </ProtectedRoute>
             } 
           />
           <Route path="/mxdealer/calculator" element={<Navigate to="/mxdealer/dashboard?tab=calculator" replace />} />
+          <Route path="/mxdealer/integrated" element={<MXIntegratedPlatform />} />
 
           {/* Admin Portal Routes */}
           <Route path="/admin" element={<AdminLogin />} />
@@ -154,6 +156,9 @@ function App() {
               </ProtectedRoute>
             } 
           />
+
+          {/* OAuth Callback Route */}
+          <Route path="/auth/callback" element={<OAuthCallback />} />
 
           {/* Legacy Routes (for backward compatibility) */}
           <Route path="/login" element={<Login />} />

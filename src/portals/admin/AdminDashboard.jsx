@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { supabase } from '../../supabaseClient';
+import DealerUserManagement from '../../components/DealerUserManagement';
 import { 
   Shield, 
   Users, 
@@ -61,6 +62,7 @@ const AdminDashboard = ({ defaultTab = 'dashboard' }) => {
 
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: BarChart3 },
+    { id: 'dealers', label: 'Dealers', icon: Users },
     { id: 'users', label: 'Users', icon: Users },
     { id: 'quotes', label: 'Quotes', icon: FileText },
     { id: 'applications', label: 'Applications', icon: FileText },
@@ -189,6 +191,8 @@ const AdminDashboard = ({ defaultTab = 'dashboard' }) => {
             </div>
           </div>
         )}
+
+        {activeTab === 'dealers' && <DealerUserManagement />}
 
         {activeTab === 'users' && (
           <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6">

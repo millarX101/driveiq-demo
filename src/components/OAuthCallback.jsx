@@ -14,66 +14,67 @@ const OAuthCallback = () => {
 
   const handleOAuthCallback = async () => {
     try {
-      // Get the hash fragment from the URL
-      const hashParams = new URLSearchParams(location.hash.substring(1));
-      const accessToken = hashParams.get('access_token');
-      const refreshToken = hashParams.get('refresh_token');
+      // Get the portal parameter from URL
+      const urlParams = new URLSearchParams(location.search);
+      const targetPortal = urlParams.get('portal') || 'employee';
 
-      if (accessToken) {
-        // Set the session with the tokens
-        const { data: { user }, error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken
-        });
+      // Handle the OAuth session
+      const { data, error } = await supabase.auth.getSession();
 
-        if (error) {
-          console.error('Error setting session:', error);
-          setError('Authentication failed. Please try again.');
-          return;
-        }
+      if (error) {
+        console.error('Error getting session:', error);
+        setError('Authentication failed. Please try again.');
+        return;
+      }
 
-        if (user) {
-          // Check if user has a profile to determine portal type
-          const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('portal_type')
-            .eq('user_id', user.id)
-            .single();
+      const { session } = data;
+      if (session?.user) {
+        const user = session.user;
 
-          // Determine redirect based on email domain or profile
-          let redirectPath = '/employee/dashboard'; // default
+        // Check if user has portal access for the target portal
+        const { data: portalAccess } = await supabase
+          .from('portal_access')
+          .select('*')
+          .eq('user_id', user.id)
+          .eq('portal_type', targetPortal)
+          .eq('is_active', true)
+          .single();
 
-          if (profile?.portal_type) {
-            redirectPath = `/${profile.portal_type}/dashboard`;
-          } else if (user.email) {
-            // Auto-assign based on email domain
-            const domain = user.email.split('@')[1];
-            
-            if (domain === 'mxdealeradvantage.com.au' || domain === 'millarx.com.au') {
-              redirectPath = '/admin/dashboard';
-            } else {
-              // Default to employee portal for other domains
-              redirectPath = '/employee/dashboard';
-              
-              // Create a basic profile for the user
-              await supabase
-                .from('user_profiles')
-                .upsert({
-                  user_id: user.id,
-                  email: user.email,
-                  full_name: user.user_metadata?.full_name || user.email.split('@')[0],
-                  portal_type: 'employee',
-                  created_at: new Date().toISOString()
-                });
-            }
+        let redirectPath = `/${targetPortal}/dashboard`;
+
+        if (!portalAccess) {
+          // If no portal access exists, create default access based on email domain
+          const domain = user.email?.split('@')[1];
+          let defaultPortal = targetPortal;
+          let permissions = {};
+
+          if (domain === 'mxdealeradvantage.com.au' || domain === 'millarx.com.au') {
+            defaultPortal = 'admin';
+            permissions = { manage_users: true, manage_rates: true, view_all_data: true };
+          } else {
+            // Create employee access by default
+            permissions = { company_id: 1, employee_id: 1, can_apply: true };
           }
 
-          // Clear the hash from URL and redirect
-          window.history.replaceState({}, document.title, window.location.pathname);
-          navigate(redirectPath, { replace: true });
+          // Create portal access record
+          await supabase
+            .from('portal_access')
+            .upsert({
+              user_id: user.id,
+              portal_type: defaultPortal,
+              permissions: permissions,
+              is_active: true,
+              created_at: new Date().toISOString()
+            });
+
+          redirectPath = `/${defaultPortal}/dashboard`;
         }
+
+        // Clear the URL and redirect
+        window.history.replaceState({}, document.title, window.location.pathname);
+        navigate(redirectPath, { replace: true });
       } else {
-        setError('No authentication token found.');
+        setError('No user session found.');
       }
     } catch (err) {
       console.error('OAuth callback error:', err);
