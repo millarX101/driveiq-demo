@@ -34,7 +34,7 @@ import ProtectedRoute from './shared/components/ProtectedRoute';
 // Legacy Components (for backward compatibility)
 import Login from './Login';
 import Protected from './Protected';
-import Dashboard from './Components/Dashboard';
+import Dashboard from './components/Dashboard';
 
 // Existing employee components (moved to new structure)
 import EmployeeLoginLegacy from './components/EmployeeLogin';
