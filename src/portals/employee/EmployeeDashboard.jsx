@@ -1443,13 +1443,24 @@ const EmployeeDashboard = () => {
               >
                 Calculate Lease Options
               </a>
-              <button className="bg-green-700 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-800 transition-colors">
-                Browse EVs
-              </button>
-              <button className="bg-yellow-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-yellow-700 transition-colors flex items-center space-x-2">
-                <Zap size={20} />
-                <span>Need Home Charging?</span>
-              </button>
+              <button
+  type="button"                                   // keep it a regular button
+  className="bg-green-700 text-white px-6 py-3 rounded-lg font-medium hover:bg-green-800 transition-colors"
+  onClick={() => window.open('https://motoru.co/au', '_blank')}  
+  /*  ↑  '_blank'  = open in a new tab.
+      If you’d rather replace the current page, use:
+      onClick={() => (window.location.href = 'https://motoru.co/au')} */
+>
+  Browse EVs
+</button>
+              <button
+  type="button"
+  onClick={() => window.open('https://jetcharge.com.au/personal/ev-home-charger/', '_blank')}
+  className="bg-yellow-600 text-white px-6 py-3 rounded-lg font-medium hover:bg-yellow-700 transition-colors flex items-center space-x-2"
+>
+  <Zap size={20} />
+  <span>Need Home Charging?</span>
+</button>
             </div>
           </div>
           <Calculator className="h-16 w-16 text-green-200" />
