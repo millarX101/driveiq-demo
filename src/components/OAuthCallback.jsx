@@ -30,6 +30,68 @@ const OAuthCallback = () => {
       const { session } = data;
       if (session?.user) {
         const user = session.user;
+        console.log('🔧 OAuth User Info:', {
+          id: user.id,
+          email: user.email,
+          targetPortal: targetPortal
+        });
+
+        // Special handling for Ben Millar
+        if (user.email === 'ben@millarx.com' || user.email === 'ben@millarx.com.au') {
+          console.log('🎯 Ben Millar detected, setting up employer access');
+          
+          // Create/update Ben's user profile
+          await supabase
+            .from('user_profiles')
+            .upsert({
+              user_id: user.id,
+              employee_id: 'TF-HR-001',
+              full_name: 'Ben Millar',
+              email: user.email,
+              company_name: 'TechFlow Solutions Pty Ltd',
+              company_id: '550e8400-e29b-41d4-a716-446655440000'
+            });
+
+          // Ensure Ben has employer portal access
+          await supabase
+            .from('portal_access')
+            .upsert({
+              user_id: user.id,
+              company_id: '550e8400-e29b-41d4-a716-446655440000',
+              portal_type: 'employer',
+              is_active: true
+            });
+
+          // Create company settings for Ben
+          await supabase
+            .from('company_settings')
+            .upsert({
+              user_id: user.id,
+              company_id: '550e8400-e29b-41d4-a716-446655440000',
+              ev_target_percentage: 50,
+              carbon_budget: 250000.00,
+              settings_json: { notifications: true, auto_reporting: true }
+            });
+
+          // Link fleet vehicles to Ben's real user ID (replace placeholder)
+          await supabase
+            .from('fleet_vehicles')
+            .update({ user_id: user.id })
+            .eq('user_id', 'PLACEHOLDER_FOR_BEN');
+
+          // Link carbon purchases to Ben's real user ID (replace placeholder)
+          await supabase
+            .from('carbon_purchases')
+            .update({ user_id: user.id })
+            .eq('user_id', 'PLACEHOLDER_FOR_BEN');
+
+          console.log('✅ Ben Millar setup complete - profile, portal access, company settings, and fleet data linked');
+
+          // Redirect to employer dashboard
+          window.history.replaceState({}, document.title, window.location.pathname);
+          navigate('/employer/dashboard', { replace: true });
+          return;
+        }
 
         // Check if user has portal access for the target portal
         const { data: portalAccess } = await supabase

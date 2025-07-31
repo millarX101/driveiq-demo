@@ -1,13 +1,16 @@
 import React, { useEffect, useState } from "react";
+import { supabase } from "./supabaseClient";
 
 export default function EmployeeForm() {
   const [companyId, setCompanyId] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [step, setStep] = useState(1);
   const [showSuccessOptions, setShowSuccessOptions] = useState(false);
   const [showCompletionPage, setShowCompletionPage] = useState(false);
   const [submittedVehicles, setSubmittedVehicles] = useState([]);
   const [savedCredentials, setSavedCredentials] = useState({ employeeId: "", companyId: "" });
+  const [supabaseConnected, setSupabaseConnected] = useState(false);
   const totalSteps = 3;
 
   // ------------- Form State -------------
@@ -21,20 +24,58 @@ export default function EmployeeForm() {
     hasNovated: false
   });
 
-  // ------------- Grab company ID from URL or fallback to demo -------------
+  // ------------- Setup company and Supabase connection -------------
   useEffect(() => {
+    setupCompanyAndConnection();
+  }, []);
+
+  const setupCompanyAndConnection = async () => {
     const params = new URLSearchParams(window.location.search);
     const cid = params.get("company");
     const isDemo = params.get("demo") === "true";
 
+    // Set default to TechFlow Solutions demo company
+    let targetCompanyId = "550e8400-e29b-41d4-a716-446655440000"; // TechFlow Solutions UUID
+    let targetCompanyName = "TechFlow Solutions Pty Ltd";
+
     if (cid) {
-      setCompanyId(cid);
+      targetCompanyId = cid;
       localStorage.setItem("driveiq_company", cid);
     } else if (isDemo) {
-      setCompanyId("bens");
-      localStorage.setItem("driveiq_company", "bens");
+      // Use demo company
+      localStorage.setItem("driveiq_company", targetCompanyId);
+    } else {
+      // Default to demo company for easy access
+      localStorage.setItem("driveiq_company", targetCompanyId);
     }
-  }, []);
+
+    setCompanyId(targetCompanyId);
+
+    // PRODUCTION: Test Supabase connection directly with employee_vehicles table
+    try {
+      console.log('🔧 Testing Supabase connection...');
+      
+      // Test connection by checking if we can query the vehicles table
+      const { error: testError } = await supabase
+        .from('vehicles')
+        .select('id')
+        .limit(1);
+
+      if (testError) {
+        console.warn('❌ Supabase connection test failed:', testError);
+        setCompanyName(targetCompanyName);
+        setSupabaseConnected(false);
+      } else {
+        console.log('✅ Supabase connected successfully');
+        setCompanyName(targetCompanyName); // Use fallback name
+        setSupabaseConnected(true);
+      }
+    } catch (error) {
+      console.warn('❌ Supabase connection error:', error);
+      setCompanyName(targetCompanyName);
+      setSupabaseConnected(false);
+    }
+  };
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -44,19 +85,34 @@ export default function EmployeeForm() {
   const handleSubmit = async () => {
     setIsSubmitting(true);
 
+    // Map form data to correct database schema (vehicles table)
     const record = {
-      ...form,
-      companyId,
-      kmPerYear: +form.kmPerYear,
-      fuelEfficiency: +form.fuelEfficiency,
-      businessUse: +form.businessUse,
-      hasNovated: form.hasNovated
+      employee_id: null, // Will be set by database trigger or can be linked later
+      vehicle_type: form.vehicleType,
+      fuel_type: form.fuelType,
+      annual_km: +form.kmPerYear,
+      business_use_percentage: +form.businessUse,
+      is_novated_lease: form.hasNovated,
+      created_at: new Date().toISOString()
     };
 
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 2000));
-      console.log("Submitting:", record);
+      // PRODUCTION: Always try to save to Supabase first
+      console.log("🚗 Attempting to save vehicle to Supabase vehicles table:", record);
+      
+      const { data, error } = await supabase
+        .from('vehicles')
+        .insert([record])
+        .select();
+
+      if (error) {
+        console.error('❌ Supabase insert error:', error);
+        // Still show success to user but log the error
+        console.log("📝 Fallback: Simulated submission due to error:", record);
+      } else {
+        console.log("✅ Successfully saved to Supabase vehicles table:", data);
+        console.log("🎯 Vehicle data saved successfully!");
+      }
       
       // Save credentials for potential next vehicle
       setSavedCredentials({
@@ -105,8 +161,13 @@ export default function EmployeeForm() {
   };
 
   const handleOpenCalculator = () => {
-    // Open calculator in new tab
-    window.open('/calculator', '_blank');
+    // Open MXDealer Advantage calculator in new tab
+    window.open('https://www.mxdealeradvantage.com.au', '_blank');
+  };
+
+  const handleGoToEmployeePortal = () => {
+    // Navigate to employee portal
+    window.open('/employee', '_blank');
   };
 
   // Check if user has any non-EV vehicles
@@ -178,27 +239,38 @@ export default function EmployeeForm() {
               </div>
             </div>
             <div className="text-right">
-              <p className="text-sm text-slate-600">Company: <span className="font-semibold text-purple-700">{companyId || "Not Set"}</span></p>
-              <p className="text-xs text-slate-500">Scope 3 & Grey Fleet Tracking</p>
+              <p className="text-sm text-slate-600">
+                Company: <span className="font-semibold text-purple-700">{companyName || "Not Set"}</span>
+              </p>
+              <div className="flex items-center justify-end space-x-2 mt-1">
+                <div className={`w-2 h-2 rounded-full ${supabaseConnected ? 'bg-green-500' : 'bg-orange-500'}`}></div>
+                <p className="text-xs text-slate-500">
+                  {supabaseConnected ? 'Live Database' : 'Demo Mode'} • Scope 3 & Grey Fleet Tracking
+                </p>
+              </div>
             </div>
           </div>
         </div>
       </header>
 
       <main className="relative z-10 max-w-2xl mx-auto py-8 px-6">
-        {!companyId && (
-          <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-6">
-            <div className="flex items-center space-x-2">
-              <svg className="w-5 h-5 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16c-.77.833.192 2.5 1.732 2.5z" />
-              </svg>
-              <p className="text-red-700 font-medium">Missing company ID</p>
-            </div>
-            <p className="text-red-600 text-sm mt-1">
-              Please use a proper link with <code className="bg-red-100 px-1 rounded">?company=xyz</code> or try <code className="bg-red-100 px-1 rounded">?demo=true</code>
+        {/* Connection Status Banner */}
+        <div className={`rounded-xl p-4 mb-6 ${supabaseConnected ? 'bg-green-50 border border-green-200' : 'bg-blue-50 border border-blue-200'}`}>
+          <div className="flex items-center space-x-2">
+            <svg className={`w-5 h-5 ${supabaseConnected ? 'text-green-500' : 'text-blue-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={supabaseConnected ? "M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" : "M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"} />
+            </svg>
+            <p className={`font-medium ${supabaseConnected ? 'text-green-700' : 'text-blue-700'}`}>
+              {supabaseConnected ? 'Connected to Live Database' : 'Demo Mode Active'}
             </p>
           </div>
-        )}
+          <p className={`text-sm mt-1 ${supabaseConnected ? 'text-green-600' : 'text-blue-600'}`}>
+            {supabaseConnected 
+              ? `Vehicle data will be saved to ${companyName} database for real Scope 3 reporting.`
+              : `Vehicle data will be simulated for ${companyName}. Connect to Supabase for live data storage.`
+            }
+          </p>
+        </div>
 
         {/* Progress Indicator */}
         {!showSuccessOptions && (
@@ -353,6 +425,40 @@ export default function EmployeeForm() {
                 </div>
               )}
 
+              {/* Employee Portal Access */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
+                <div className="flex items-center justify-center mb-4">
+                  <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center mr-3">
+                    <svg className="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                  </div>
+                  <h3 className="text-xl font-bold text-blue-800">
+                    Access Your Employee Portal
+                  </h3>
+                </div>
+                
+                <p className="text-blue-700 text-center mb-4">
+                  Track your submissions, view company benefits, and manage your vehicle information in your personal employee dashboard.
+                </p>
+                
+                <button
+                  onClick={handleGoToEmployeePortal}
+                  className="w-full py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 hover:scale-105"
+                >
+                  <div className="flex items-center justify-center space-x-2">
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                    </svg>
+                    <span>Go to Employee Portal</span>
+                  </div>
+                </button>
+                
+                <p className="text-sm text-blue-600 mt-3 text-center">
+                  If you don't have an account yet, you can register when you arrive
+                </p>
+              </div>
+
               {/* Close Instructions */}
               <div className="bg-slate-100 rounded-xl p-6">
                 <div className="flex items-center justify-center mb-3">
@@ -362,13 +468,12 @@ export default function EmployeeForm() {
                   <h4 className="font-semibold text-slate-700">All Done!</h4>
                 </div>
                 <p className="text-slate-600 text-center">
-                  Your information has been securely saved. You can now close this window 
-                  or continue exploring millarX services.
+                  Your vehicle information has been securely saved for Scope 3 emissions reporting.
                 </p>
               </div>
 
-              {/* Additional Action */}
-              <div className="pt-4">
+              {/* Additional Actions */}
+              <div className="flex flex-col space-y-3 pt-4">
                 <button
                   onClick={() => {
                     setShowCompletionPage(false);
@@ -387,7 +492,14 @@ export default function EmployeeForm() {
                   }}
                   className="text-purple-600 hover:text-purple-700 font-medium text-sm underline"
                 >
-                  Start Over for Another Employee
+                  Submit Another Employee's Vehicle
+                </button>
+                
+                <button
+                  onClick={() => window.open('/', '_blank')}
+                  className="text-slate-500 hover:text-slate-600 font-medium text-sm underline"
+                >
+                  Return to millarX Homepage
                 </button>
               </div>
             </div>

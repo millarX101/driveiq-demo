@@ -555,30 +555,64 @@ const EmployeeDashboard = () => {
     setNewSegment(prev => ({ ...prev, description: value }));
   }, []);
 
-  // Add Vehicle functionality
+  // PRODUCTION: Save vehicle with all required fields for Employer Dashboard
   const saveVehicle = async () => {
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      const userId = session?.user?.id || 'demo-employee-123';
+      if (!session?.user) {
+        alert('Please log in to save vehicle data');
+        return;
+      }
+
+      // Get company ID from portal access
+      const { data: portalAccess, error: portalError } = await supabase
+        .from('portal_access')
+        .select('company_id')
+        .eq('user_id', session.user.id)
+        .eq('portal_type', 'employee')
+        .eq('is_active', true)
+        .single();
+
+      const companyId = portalAccess?.company_id || '550e8400-e29b-41d4-a716-446655440000'; // Default to TechFlow
+
+      // Generate employee ID
+      const employeeId = `EMP-${Date.now().toString().slice(-6)}`;
+
+      console.log('🚗 Saving vehicle to Supabase:', {
+        user_id: session.user.id,
+        company_id: companyId,
+        employee_id: employeeId,
+        vehicle_type: `${newVehicle.make} ${newVehicle.model}`,
+        fuel_type: newVehicle.fuelType
+      });
 
       const { error } = await supabase
         .from('employee_vehicles')
         .insert({
-          user_id: userId,
+          user_id: session.user.id,
+          company_id: companyId,
+          employee_id: employeeId,
+          vehicle_type: `${newVehicle.make} ${newVehicle.model}`,
+          fuel_type: newVehicle.fuelType,
+          km_per_year: 15000, // Default estimate
+          fuel_efficiency: newVehicle.fuelType === 'electric' ? 18 : newVehicle.fuelType === 'hybrid' ? 5.5 : 8.0,
+          business_use_percentage: 25, // Default estimate
+          has_novated_lease: newVehicle.isNovated,
+          monthly_lease_payment: parseFloat(newVehicle.monthlyPayment) || 0,
+          lease_end_date: newVehicle.leaseEndDate,
           make: newVehicle.make,
           model: newVehicle.model,
           year: parseInt(newVehicle.year),
-          fuel_type: newVehicle.fuelType,
-          monthly_lease_payment: parseFloat(newVehicle.monthlyPayment) || 0,
-          lease_end_date: newVehicle.leaseEndDate,
           is_novated: newVehicle.isNovated,
           created_at: new Date().toISOString()
         });
 
       if (error) {
-        console.error('Error saving vehicle:', error);
-        alert('Error saving vehicle to database');
+        console.error('❌ Error saving vehicle:', error);
+        alert(`Error saving vehicle: ${error.message}`);
       } else {
+        console.log('✅ Vehicle saved successfully to employee_vehicles table');
+        
         // Add to local state
         const newLease = {
           id: personalData.currentLeases.length + 1,
@@ -606,11 +640,11 @@ const EmployeeDashboard = () => {
           isNovated: false
         });
         setShowAddVehicleModal(false);
-        alert('Vehicle added successfully!');
+        alert('✅ Vehicle added successfully and will appear in Employer Dashboard!');
       }
     } catch (error) {
-      console.error('Error saving vehicle:', error);
-      alert('Error saving vehicle');
+      console.error('❌ Error saving vehicle:', error);
+      alert(`Error saving vehicle: ${error.message}`);
     }
   };
 

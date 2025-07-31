@@ -40,6 +40,9 @@ import Dashboard from './components/Dashboard';
 import EmployeeLoginLegacy from './components/EmployeeLogin';
 import EmployeeDashboardLegacy from './components/EmployeeDashboard';
 
+// Calculator Component
+import ComprehensiveCalculator from './components/ComprehensiveCalculator';
+
 // OAuth Callback Handler
 import OAuthCallback from './components/OAuthCallback';
 
@@ -73,6 +76,7 @@ function App() {
           {/* Main Landing and Form Routes */}
           <Route path="/" element={<LandingPage />} />
           <Route path="/form" element={<EmployeeForm />} />
+          <Route path="/employee-form" element={<EmployeeForm />} />
           <Route path="/thanks" element={<Confirmation />} />
 
           {/* Employee Portal Routes */}
